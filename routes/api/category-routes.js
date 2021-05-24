@@ -8,7 +8,23 @@ router.get("/", (req, res) => {
   // be sure to include its associated Products
   Category.findAll()
     .then((categories) => {
-      res.json(categories);
+      // res.json(categories);
+      Promise.all(
+        categories.map((category) => {
+          return Product.findAll({
+            where: {
+              category_id: category.id,
+            },
+          }).then((products) => {
+            return {
+              ...category,
+              products,
+            };
+          });
+        })
+      ).then((categories) => {
+        res.json(categories);
+      });
     })
     .catch((err) => {
       res.status(500).json({
@@ -51,7 +67,7 @@ router.put("/:id", (req, res) => {
   })
     .then((rowsupdated) => {
       res.json({
-        rowsupdated
+        rowsupdated,
       });
     })
     .catch((err) => {
@@ -64,7 +80,24 @@ router.put("/:id", (req, res) => {
 
 router.delete("/:id", (req, res) => {
   // delete a category by its `id` value
-  Category.del
+  Category.destroy({
+    where: {
+      id: req.params.id,
+    },
+  })
+    .then((rowsdeleted) => {
+      res.json({
+        rowsdeleted,
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        err,
+      });
+    });
 });
 
 module.exports = router;
+
+//linking together relational databases
